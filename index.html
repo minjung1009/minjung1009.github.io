@@ -54,6 +54,9 @@ section{padding:24px 28px}
 ::-webkit-scrollbar{height:5px;width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+#playall-btn{background:var(--accent);border:none;border-radius:6px;color:#0d1117;padding:5px 14px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:700;transition:all .15s;margin-left:12px;flex-shrink:0}
+#playall-btn:hover{opacity:.85}
+#playall-btn.pausing{background:#56d364}
 </style>
 </head>
 <body>
@@ -83,6 +86,7 @@ section{padding:24px 28px}
 <section id="qual-section" style="display:none">
   <h2 class="section-title">Qualitative Results
     <span class="section-sub">50 samples × 3 augs</span>
+    <button id="playall-btn" onclick="togglePlayAll()">&#9654; Play All</button>
   </h2>
   <div class="legend"><span class="badge" style="background:#d2a8ff22;color:#d2a8ff;border:1px solid #d2a8ff44;">Token LoRA (t²-anneal)</span><span class="badge" style="background:#7ee78722;color:#7ee787;border:1px solid #7ee78744;">Token LoRA (linear-anneal)</span><span class="badge" style="background:#79c0ff22;color:#79c0ff;border:1px solid #79c0ff44;">ControlNet-18b (LRscale)</span><span class="badge" style="background:#f778ba22;color:#f778ba;border:1px solid #f778ba44;">Token LoRA (no anneal)</span><span class="badge" style="background:#ffa65722;color:#ffa657;border:1px solid #ffa65744;">ControlNet-18b (uniformLR)</span></div>
   <div class="tabs-bar"><button class="tab-btn  active" onclick="switchPage('Pexels_3C_product_0')" id="btn_Pexels_3C_product_0">Pexels_3C_product_0</button>
@@ -498,11 +502,27 @@ function switchPage(id){
   pauseAll();
 }
 function togglePlay(v){
-  if(v.paused){v.play();v.classList.add('playing');}
+  if(v.paused){v.play().catch(()=>{});v.classList.add('playing');}
   else{v.pause();v.classList.remove('playing');}
+}
+function getVisibleVideos(){
+  const panel=document.querySelector('.page-panel[style*="block"]');
+  return panel?Array.from(panel.querySelectorAll('video')):[];
+}
+function playAll(){
+  getVisibleVideos().forEach(v=>{v.play().catch(()=>{});v.classList.add('playing');});
+  const btn=document.getElementById('playall-btn');
+  if(btn){btn.innerHTML='&#9646;&#9646; Pause All';btn.classList.add('pausing');}
 }
 function pauseAll(){
   document.querySelectorAll('video').forEach(v=>{v.pause();v.classList.remove('playing');});
+  const btn=document.getElementById('playall-btn');
+  if(btn){btn.innerHTML='&#9654; Play All';btn.classList.remove('pausing');}
+}
+function togglePlayAll(){
+  const btn=document.getElementById('playall-btn');
+  if(btn&&btn.classList.contains('pausing')){pauseAll();}
+  else{playAll();}
 }
 function showSection(id){
   ['quant-section','qual-section'].forEach(s=>{
