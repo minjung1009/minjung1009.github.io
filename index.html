@@ -61,6 +61,11 @@ section{padding:24px 28px}
 #playall-btn{background:var(--accent);border:none;border-radius:6px;color:#0d1117;padding:5px 14px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:700;transition:all .15s;margin-left:12px;flex-shrink:0}
 #playall-btn:hover{opacity:.85}
 #playall-btn.pausing{background:#56d364}
+.page-nav{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.page-nav a{color:#58a6ff;font-size:11px;text-decoration:none;border:1px solid #30363d;padding:4px 10px;border-radius:5px}
+.page-nav a:hover{background:#21262d}
+.epe-table{max-width:720px;margin-bottom:8px}
+.epe-sub{margin:18px 0 8px;font-size:13px}
 .metric-desc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:18px;max-width:900px}
 .metric-desc-card{background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
 .mdc-name{font-size:14px;font-weight:700;color:var(--accent)}
@@ -74,6 +79,11 @@ section{padding:24px 28px}
   <h1>Evaluation Report &mdash; Track-conditioned Video-to-Video Generation</h1>
   <div class="sub">Click video to play/pause &nbsp;·&nbsp; Space to pause all &nbsp;·&nbsp;
   5 experiments &nbsp;·&nbsp; 50 qualitative samples × 3 augs</div>
+</div>
+<div class="page-nav">
+  <a href="index.html">Main report</a>
+  <a href="ctrlnet_eval.html"><strong>ControlNet eval (50×3, new)</strong></a>
+  <a href="qual_only.html">Qualitative only</a>
 </div>
 <nav class="section-nav">
   <button class="snav-btn active" data-target="quant-section" onclick="showSection('quant-section')">📊 Quantitative</button>
@@ -113,10 +123,26 @@ section{padding:24px 28px}
         <th class="num" title="DINOv2 Cosine Similarity — 높을수록 ↑">DINO ↑</th>
         <th class="num" title="End-Point Error (px) — 낮을수록 ↓">EPE ↓ (px)</th>
       </tr></thead>
-<tbody><tr><td><span class="badge" style="background:#d2a8ff22;color:#d2a8ff;border:1px solid #d2a8ff55;">Latent Splat (t²-anneal)</span></td><td class="num">499</td><td class="num">15.3</td><td class="num">0.1347 <span class="std">±0.053</span></td><td class="num"><strong>0.8521</strong> <span class="std">±0.092</span></td><td class="num">24.14 <span class="std">±23.2</span></td></tr><tr><td><span class="badge" style="background:#79c0ff22;color:#79c0ff;border:1px solid #79c0ff55;">ControlNet-18b (LRscale)</span></td><td class="num">863</td><td class="num"><strong>8.8</strong></td><td class="num"><strong>0.1310</strong> <span class="std">±0.045</span></td><td class="num">0.8303 <span class="std">±0.093</span></td><td class="num"><strong>10.05</strong> <span class="std">±6.4</span></td></tr></tbody>
+<tbody><tr><td><span class="badge" style="background:#d2a8ff22;color:#d2a8ff;border:1px solid #d2a8ff55;">Latent Splat (t²-anneal)</span></td><td class="num">499</td><td class="num">15.3</td><td class="num">0.1347 <span class="std">±0.053</span></td><td class="num"><strong>0.8521</strong> <span class="std">±0.092</span></td><td class="num">24.14 <span class="std">±23.2</span></td></tr><tr><td><span class="badge" style="background:#79c0ff22;color:#79c0ff;border:1px solid #79c0ff55;">ControlNet-18b (LRscale) [iter 17500, 50×3]</span></td><td class="num">150</td><td class="num">34.9</td><td class="num">0.1238 <span class="std">±0.042</span></td><td class="num">0.8124 <span class="std">±0.106</span></td><td class="num"><strong>9.40</strong> <span class="std">±6.58</span></td></tr><tr><td><span class="badge" style="background:#a5d6ff22;color:#a5d6ff;border:1px solid #a5d6ff55;">ControlNet-18b (LRscale) (swap)</span></td><td class="num">150</td><td class="num">34.3</td><td class="num">0.1649 <span class="std">±0.061</span></td><td class="num">0.8124 <span class="std">±0.093</span></td><td class="num"><strong>10.10</strong> <span class="std">±6.53</span></td></tr></tbody>
     </table>
   </div>
 </section>
+
+  <h2 class="section-title" style="margin-top:24px;">Best Track Following (Lowest EPE)
+    <span class="section-sub"><a href="ctrlnet_eval.html">Full tables on ControlNet page →</a></span>
+  </h2>
+  <h3 class="epe-sub" style="color:#79c0ff">Forward — ControlNet (top 5 shown — <a href="ctrlnet_eval.html" style="color:#79c0ff">full 10</a>)</h3>
+<table class="metrics-table epe-table"><thead><tr><th>#</th><th>Sample/Aug</th><th>EPE↓</th></tr></thead><tbody><tr><td class="num">1</td><td><code>Pexels_train_0/aug_02</code></td><td class="num">2.12</td></tr><tr><td class="num">2</td><td><code>Pexels_calligraphy_0/aug_02</code></td><td class="num">2.16</td></tr><tr><td class="num">3</td><td><code>Pexels_train_0/aug_00</code></td><td class="num">2.18</td></tr><tr><td class="num">4</td><td><code>Pexels_forest_0/aug_00</code></td><td class="num">2.25</td></tr><tr><td class="num">5</td><td><code>Pexels_forest_0/aug_01</code></td><td class="num">2.33</td></tr></tbody></table>
+  <h3 class="epe-sub" style="color:#a5d6ff">Swap — ControlNet (top 5 shown — <a href="ctrlnet_eval.html" style="color:#a5d6ff">full 10</a>)</h3>
+<table class="metrics-table epe-table"><thead><tr><th>#</th><th>Sample/Aug</th><th>EPE↓</th></tr></thead><tbody><tr><td class="num">1</td><td><code>Pexels_forest_0/aug_02</code></td><td class="num">1.90</td></tr><tr><td class="num">2</td><td><code>Pexels_agricultural_scenarios_0/aug_01</code></td><td class="num">2.07</td></tr><tr><td class="num">3</td><td><code>Pexels_plant_0/aug_02</code></td><td class="num">2.26</td></tr><tr><td class="num">4</td><td><code>Pexels_forest_0/aug_00</code></td><td class="num">2.27</td></tr><tr><td class="num">5</td><td><code>Pexels_forest_0/aug_01</code></td><td class="num">2.54</td></tr></tbody></table>
+
+  <h2 class="section-title" style="margin-top:24px;">Worst Track Following (Highest EPE)
+    <span class="section-sub"><a href="ctrlnet_eval.html">Full tables on ControlNet page →</a></span>
+  </h2>
+  <h3 class="epe-sub" style="color:#79c0ff">Forward — ControlNet (worst 5 — <a href="ctrlnet_eval.html" style="color:#79c0ff">full 10</a>)</h3>
+<table class="metrics-table epe-table"><thead><tr><th>#</th><th>Sample/Aug</th><th>EPE↓</th></tr></thead><tbody><tr><td class="num">1</td><td><code>Pexels_industrial_environment_0/aug_02</code></td><td class="num">51.84</td></tr><tr><td class="num">2</td><td><code>Pexels_industrial_environment_0/aug_00</code></td><td class="num">34.91</td></tr><tr><td class="num">3</td><td><code>Pexels_surfing_0/aug_02</code></td><td class="num">25.83</td></tr><tr><td class="num">4</td><td><code>Pexels_clothing_accessories_0/aug_01</code></td><td class="num">25.71</td></tr><tr><td class="num">5</td><td><code>Pexels_aquatic_animals_0/aug_00</code></td><td class="num">25.13</td></tr></tbody></table>
+  <h3 class="epe-sub" style="color:#a5d6ff">Swap — ControlNet (worst 5 — <a href="ctrlnet_eval.html" style="color:#a5d6ff">full 10</a>)</h3>
+<table class="metrics-table epe-table"><thead><tr><th>#</th><th>Sample/Aug</th><th>EPE↓</th></tr></thead><tbody><tr><td class="num">1</td><td><code>Pexels_toys_0/aug_01</code></td><td class="num">35.36</td></tr><tr><td class="num">2</td><td><code>Pexels_swimming_0/aug_02</code></td><td class="num">34.78</td></tr><tr><td class="num">3</td><td><code>Pexels_handmade_0/aug_02</code></td><td class="num">29.59</td></tr><tr><td class="num">4</td><td><code>Pexels_hiking_0/aug_01</code></td><td class="num">27.63</td></tr><tr><td class="num">5</td><td><code>Pexels_surfing_0/aug_01</code></td><td class="num">27.16</td></tr></tbody></table>
 
 <section id="qual-section">
   <h2 class="section-title">Qualitative Results
