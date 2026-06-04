@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <title>VLM LAP + VLM LoRA (10×3)</title>
 <style>
 :root{--bg:#0d1117;--surf:#161b22;--surf2:#21262d;--surf3:#2d333b;--border:#30363d;--text:#c9d1d9;--muted:#8b949e;--accent:#58a6ff}
@@ -85,6 +86,13 @@ section{padding:24px 28px}
 .page-nav a{color:var(--accent);font-size:11px;text-decoration:none;border:1px solid var(--border);padding:4px 10px;border-radius:5px}
 .page-nav a:hover{background:var(--surf2)}
 .epe-table{max-width:720px;margin-bottom:8px}
+
+.sweep-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:14px;margin:0 0 20px;max-width:960px}
+.sweep-chart-card{background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:12px 14px 10px}
+.sweep-chart-card.sweep-chart-wide{grid-column:1/-1}
+.sweep-chart-title{font-size:12px;font-weight:700;color:#56d364;margin-bottom:8px}
+.sweep-chart-wrap{position:relative;height:220px}
+.sweep-chart-wide .sweep-chart-wrap{height:200px}
 </style>
 </head>
 <body>
@@ -122,6 +130,18 @@ section{padding:24px 28px}
       <span class="mdc-full">End-Point Error (BootsTAPIR)</span>
       <span class="mdc-body">Track-following accuracy vs GT tracks (forward: <code>tracks_target</code>; swap: counter tracks). <em>Lower</em> follows motion better.</span>
     </div>
+  </div>
+
+  <h2 class="section-title" style="margin-top:8px;">Checkpoint sweep — all inputs + VLM LoRA
+    <span class="section-sub">10 samples × 3 augs · forward eval · source: report.json</span>
+  </h2>
+  <p class="quant-merge-note">Iter <strong>0</strong> is sweep baseline <code>ctrlnet_lrscale</code> (no VLM LAP). Iters <strong>1k–7k</strong> load <code>vlm_lap_all_inputs_vlm_lora</code> ckpt (VLM LoRA + connector + ControlNet + DiT LoRA). Highlight: <span style="color:#7ee787">7k</span>.</p>
+  <div class="sweep-chart-grid">
+    <div class="sweep-chart-card"><div class="sweep-chart-title">FVD ↓</div><div class="sweep-chart-wrap"><canvas id="sweep-chart-fvd"></canvas></div></div>
+    <div class="sweep-chart-card"><div class="sweep-chart-title">L2 mean ↓</div><div class="sweep-chart-wrap"><canvas id="sweep-chart-l2"></canvas></div></div>
+    <div class="sweep-chart-card"><div class="sweep-chart-title">DINO ↑</div><div class="sweep-chart-wrap"><canvas id="sweep-chart-dino"></canvas></div></div>
+    <div class="sweep-chart-card"><div class="sweep-chart-title">EPE ↓ (px)</div><div class="sweep-chart-wrap"><canvas id="sweep-chart-epe"></canvas></div></div>
+    <div class="sweep-chart-card sweep-chart-wide"><div class="sweep-chart-title">MCQ accuracy ↑ (plain + VLM LoRA, 148 questions)</div><div class="sweep-chart-wrap"><canvas id="sweep-chart-mcq"></canvas></div></div>
   </div>
   <p class="quant-merge-note">Scores combine <strong>forward + swap</strong> per model: L2 / DINO / EPE are pooled over all videos (N=60 for 10×3); FVD is the arithmetic mean of the two direction-wise FVD values.</p>
   <div class="table-wrap">
@@ -389,6 +409,58 @@ function showSection(id){
 document.addEventListener('keydown',e=>{
   if(e.key===' '&&e.target.tagName!=='INPUT'){e.preventDefault();pauseAll();}
 });
+</script>
+<script>
+const SWEEP_DATA = {"labels": ["0 (ctrlnet)", "1k", "2k", "3k", "4k", "5k", "6k", "7k"], "fvd": [54.88306688642153, 131.82666455336582, 138.08826879391665, 143.49269441052633, 159.56135797140286, 161.00303013627777, 141.9635731072858, 138.28839408971126], "l2": [0.12669990609089535, 0.2601127247015635, 0.28032411287228265, 0.2817473222812017, 0.3062744016448657, 0.26280242800712583, 0.2795750538508097, 0.2442322462797165], "dino": [0.7855605095624923, 0.44259063055117925, 0.34738927309711776, 0.4952406376600266, 0.4175771082441012, 0.40814811959862707, 0.606388341387113, 0.6636798640092214], "epe": [6.572620636012663, 85.41805292149373, 59.52381386965014, 74.68247214581537, 81.66177588844049, 64.09252002911995, 70.25322863558705, 59.60351946049738], "mcq": [56.75675675675676, 56.75675675675676, 56.75675675675676, 56.08108108108109, 56.08108108108109, 56.75675675675676, 56.08108108108109, 56.75675675675676], "iters": [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000]};
+function sweepPointRadius(iters) {
+  return iters.map(it => (it === 7000 ? 6 : (it === 0 ? 5 : 3)));
+}
+function sweepPointColors(iters) {
+  return iters.map(it => (it === 7000 ? '#7ee787' : (it === 0 ? '#79c0ff' : '#56d364')));
+}
+function sweepLineDataset(values, label) {
+  return {
+    label,
+    data: values,
+    borderColor: '#56d364',
+    backgroundColor: 'rgba(86,211,100,0.12)',
+    pointBackgroundColor: sweepPointColors(SWEEP_DATA.iters),
+    pointBorderColor: '#0d1117',
+    pointRadius: sweepPointRadius(SWEEP_DATA.iters),
+    tension: 0.25,
+    fill: false,
+  };
+}
+function initSweepCharts() {
+  if (typeof Chart === 'undefined' || !document.getElementById('sweep-chart-fvd')) return;
+  const base = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { backgroundColor: '#21262d', titleColor: '#c9d1d9', bodyColor: '#8b949e' },
+    },
+    scales: {
+      x: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { color: 'rgba(48,54,61,0.5)' } },
+      y: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { color: 'rgba(48,54,61,0.35)' } },
+    },
+  };
+  const mk = (id, values, label, yOpts) => new Chart(document.getElementById(id), {
+    type: 'line',
+    data: { labels: SWEEP_DATA.labels, datasets: [sweepLineDataset(values, label)] },
+    options: { ...base, scales: { ...base.scales, y: { ...base.scales.y, ...yOpts } } },
+  });
+  mk('sweep-chart-fvd', SWEEP_DATA.fvd, 'FVD', { title: { display: true, text: 'lower better', color: '#8b949e', font: { size: 9 } } });
+  mk('sweep-chart-l2', SWEEP_DATA.l2, 'L2', { title: { display: true, text: 'lower better', color: '#8b949e', font: { size: 9 } } });
+  mk('sweep-chart-dino', SWEEP_DATA.dino, 'DINO', { title: { display: true, text: 'higher better', color: '#8b949e', font: { size: 9 } } });
+  mk('sweep-chart-epe', SWEEP_DATA.epe, 'EPE', { title: { display: true, text: 'lower better', color: '#8b949e', font: { size: 9 } } });
+  mk('sweep-chart-mcq', SWEEP_DATA.mcq, 'MCQ %', {
+    min: 50,
+    max: 60,
+    title: { display: true, text: 'higher better', color: '#8b949e', font: { size: 9 } },
+  });
+}
+document.addEventListener('DOMContentLoaded', initSweepCharts);
 </script>
 </body>
 </html>
