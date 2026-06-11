@@ -180,7 +180,6 @@ em{color:var(--muted);font-style:normal}
     <tr><td><code>&lt;PREDICT_TRACK&gt;</code></td><td>A' — predict target track coordinates</td><td>Track Regression Head</td></tr>
     <tr><td><code>&lt;DESCRIBE_MOTION&gt;</code></td><td>B — generate motion description</td><td>Language Head</td></tr>
     <tr><td><code>&lt;MOTION_QA&gt;</code></td><td>C — answer motion-related questions</td><td>Language Head</td></tr>
-    <tr><td><code>&lt;MATCH_CAP_TRACK&gt;</code></td><td>C-align — caption–track consistency check</td><td>Language Head</td></tr>
   </tbody>
 </table>
 
@@ -305,7 +304,7 @@ Fallback: if C_s ≈ C_t, derive template from ΔT = T_t − T_s</code></pre>
                                          │
                         ┌────────────────┴──────────────────┐
                   Language Head                    <span class="arch-new">Track Regression Head ③</span>
-               (Task B / C / C-align)                   (Task A')
+               (Task B / C )                           (Task A')
                   text output                      T_t  (N, T, 2)</code></pre>
 
 <h3>Why E_video + E_track?</h3>
@@ -336,7 +335,7 @@ tokens = concat([video_tokens, track_tokens], dim=seq)</code></pre>
     <div class="stage-num">Stage 2</div>
     <div class="stage-title">Multi-task Instruction Tuning</div>
     <p><strong>Backbone:</strong> LoRA or top-N unfrozen</p>
-    <p><strong>Loss:</strong> A' + B + C + C-align mixed</p>
+    <p><strong>Loss:</strong> A' + B + C mixed</p>
     <p>\[ \mathcal{L} = 2\mathcal{L}_A + \mathcal{L}_B + \mathcal{L}_C + \mathcal{L}_M \]</p>
   </div>
   <div class="stage">
