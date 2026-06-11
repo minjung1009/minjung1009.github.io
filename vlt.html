@@ -313,9 +313,97 @@ Fallback: if C_s ≈ C_t, derive template from ΔT = T_t − T_s</code></pre>
 track_tokens = rope_encode(track_patches, t, h, w) + E_track   # NEW
 tokens = concat([video_tokens, track_tokens], dim=seq)</code></pre>
 
-<h3>Tokenization: shared spatial grid</h3>
-<p>Both video and track use the same patchify + merge pipeline, ensuring <code>video_token[t,h,w]</code> and <code>track_token[t,h,w]</code> share the same receptive field:</p>
-<p>\[ (\cdot, H, W) \;\xrightarrow{\text{patchify}(2,14,14)}\; \xrightarrow{\mathbf{W}}\; \xrightarrow{\text{merge }2\times2}\; \left(\tfrac{T}{2},\tfrac{H}{28},\tfrac{W}{28}, d\right) \]</p>
+<h3>Video vs Track tokenization — side by side</h3>
+<p>Both paths share the <strong>same patchify grid, spatial merge, and 3D-RoPE</strong>. Only the input channel count and the first linear differ.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0">
+  <div class="card">
+    <div class="card-title" style="margin-bottom:10px;font-size:13px">Video Path &nbsp;<em style="font-weight:400;color:var(--muted);font-size:11px">(Qwen3-VL original)</em></div>
+<pre style="margin:0;font-size:11.5px;line-height:1.7"><code>Input
+  V_s ∈ ℝ^{T × H × W × 3}
+
+─── Step 1: Temporal + Spatial Patchify ───
+  patch size: temporal=2, spatial=14×14
+  T      frames  → T/2   patches
+  H      pixels  → H/14  patches
+  W      pixels  → W/14  patches
+  shape: (T/2, H/14, W/14)
+
+─── Step 2: Flatten each patch ───
+  each patch: 2 × 14 × 14 × 3 values
+  flatten dim = 2×14×14×3 = 1176
+  shape: (T/2, H/14, W/14, 1176)
+
+─── Step 3: Patch Embedding (Linear) ───
+  Linear(1176 → d)   ← ViT patch embed
+  shape: (T/2, H/14, W/14, d)
+
+─── Step 4: Spatial Merge (2×2) ───
+  H/14 → H/28,  W/14 → W/28
+  shape: (T/2, H/28, W/28, d)
+
+─── Step 5: 3D-RoPE ───
+  apply RoPE(t, h, w) per token
+
+─── Step 6: Modality Embedding ───
+  token += E_video   (learnable ∈ ℝ^d)
+
+Output
+  video_tokens ∈ ℝ^{T/2 × H/28 × W/28 × d}</code></pre>
+  </div>
+  <div class="card">
+    <div class="card-title orange" style="margin-bottom:10px;font-size:13px">Track Path &nbsp;<em style="font-weight:400;color:var(--muted);font-size:11px">(VLT — NEW)</em></div>
+<pre style="margin:0;font-size:11.5px;line-height:1.7"><code>Input
+  C ∈ ℝ^{T × H × W × C}    C = 64
+  (rasterized track volume)
+
+─── Step 1: Temporal + Spatial Patchify ───
+  patch size: temporal=2, spatial=14×14
+  T      frames  → T/2   patches
+  H      pixels  → H/14  patches   ← shared
+  W      pixels  → W/14  patches   ← shared
+  shape: (T/2, H/14, W/14)
+
+─── Step 2: Flatten each patch ───
+  each patch: 2 × 14 × 14 × C values
+  flatten dim = 2×14×14×C = 14×14×2C
+  shape: (T/2, H/14, W/14, 14×14×2C)
+
+─── Step 3: <span class="arch-new">Track Projection Layer ①</span> ───
+  <span class="arch-new">Linear(14×14×2C → d)</span>   ← NEW module
+  shape: (T/2, H/14, W/14, d)
+
+─── Step 4: Spatial Merge (2×2) ───
+  H/14 → H/28,  W/14 → W/28       ← shared
+  shape: (T/2, H/28, W/28, d)
+
+─── Step 5: 3D-RoPE ───
+  apply RoPE(t, h, w) per token    ← shared
+
+─── Step 6: <span class="arch-new">Modality Embedding ②</span> ───
+  token += <span class="arch-new">E_track</span>   (learnable ∈ ℝ^d, NEW)
+
+Output
+  track_tokens ∈ ℝ^{T/2 × H/28 × W/28 × d}</code></pre>
+  </div>
+</div>
+
+<p class="note">The two pipelines are <strong>structurally symmetric</strong> — the track volume is treated as a new video channel, with only the first linear layer swapped out. This guarantees that <code>video_token[t,h,w]</code> and <code>track_token[t,h,w]</code> share the same receptive field and positional encoding.</p>
+
+<h3>Comparison summary</h3>
+<table>
+  <thead><tr><th>Step</th><th>Video (Qwen3-VL)</th><th>Track (VLT)</th></tr></thead>
+  <tbody>
+    <tr><td>Input tensor</td><td><code>(T, H, W, 3)</code></td><td><code>(T, H, W, C)</code>  C=64</td></tr>
+    <tr><td>Temporal patch</td><td colspan="2" style="color:var(--muted);text-align:center">2 frames — shared</td></tr>
+    <tr><td>Spatial patch</td><td colspan="2" style="color:var(--muted);text-align:center">14×14 — shared</td></tr>
+    <tr><td>Patch flatten dim</td><td>2×14×14×3 = <strong>1176</strong></td><td>2×14×14×C = <strong>14×14×2C</strong></td></tr>
+    <tr><td>First Linear</td><td>1176 → d &nbsp;<em>(ViT patch embed)</em></td><td>14×14×2C → d &nbsp;<em class="arch-new">(Track Proj. Layer ①)</em></td></tr>
+    <tr><td>Spatial merge</td><td colspan="2" style="color:var(--muted);text-align:center">2×2 (H/14→H/28) — shared</td></tr>
+    <tr><td>3D-RoPE</td><td colspan="2" style="color:var(--muted);text-align:center">RoPE(t, h, w) — shared</td></tr>
+    <tr><td>Modality embedding</td><td><code>E_video</code></td><td><code class="arch-new">E_track ②</code></td></tr>
+    <tr><td>Output tokens</td><td colspan="2" style="color:var(--muted);text-align:center">(T/2, H/28, W/28, d) — same shape, concat along sequence</td></tr>
+  </tbody>
+</table>
 </section>
 
 <!-- ───────────────────── 5. TRAINING ───────────────────── -->
