@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "kind": "baseline_ckpt_sweep",
+  "created_at": "2026-06-05T09:36:34.165858+00:00",
+  "updated_at": "2026-06-10T07:39:03.802001+00:00",
+  "sweep_step": 2500,
+  "sweep_iters": [
+    5000,
+    10000,
+    15000
+  ],
+  "samples": [
+    "Pexels_3C_product_0",
+    "Pexels_agricultural_scenarios_0",
+    "Pexels_aircraft_0",
+    "Pexels_aquatic_animals_0",
+    "Pexels_architecture_0",
+    "Pexels_bird_0",
+    "Pexels_bowling_0",
+    "Pexels_calligraphy_0",
+    "Pexels_canyon_mountain_0",
+    "Pexels_car_0",
+    "Pexels_cartoon_animation_0",
+    "Pexels_city_street_0",
+    "Pexels_clothing_accessories_0",
+    "Pexels_cooking_0",
+    "Pexels_dance_0",
+    "Pexels_desert_0",
+    "Pexels_fitness_0",
+    "Pexels_forest_0",
+    "Pexels_handmade_0",
+    "Pexels_hiking_0",
+    "Pexels_hot_air_balloon_0",
+    "Pexels_industrial_environment_0",
+    "Pexels_insect_0",
+    "Pexels_instrumental_performance_0",
+    "Pexels_interview_0",
+    "Pexels_making_up_0",
+    "Pexels_mall_shop_0",
+    "Pexels_medical_0",
+    "Pexels_military_activities_0",
+    "Pexels_model_catwalk_0",
+    "Pexels_office_0",
+    "Pexels_other_natural_scenery_0",
+    "Pexels_other_sports_0",
+    "Pexels_other_transportation_0",
+    "Pexels_others_0",
+    "Pexels_outdoor_activities_0",
+    "Pexels_park_0",
+    "Pexels_personal_portrait_0",
+    "Pexels_pet_0",
+    "Pexels_plant_0",
+    "Pexels_scientific_experiment_0",
+    "Pexels_ship_0",
+    "Pexels_singing_0",
+    "Pexels_skateboard_0",
+    "Pexels_space_exploration_0",
+    "Pexels_surfing_0",
+    "Pexels_swimming_0",
+    "Pexels_tennis_0",
+    "Pexels_toys_0",
+    "Pexels_train_0"
+  ],
+  "samples_json": "/data/project-vilab/minjung/Fastgen_mj/eval_qualitative_results/samples_50s_3a.json",
+  "num_augs": 3,
+  "directions": [
+    "forward",
+    "swap"
+  ],
+  "metric_names": [
+    "fvd",
+    "l2_mean",
+    "l2_std",
+    "dino_mean",
+    "dino_std",
+    "epe_mean",
+    "epe_std"
+  ],
+  "experiments": {
+    "token_lora": {
+      "label": "Edit-by-Track (Token LoRA, t²-anneal)",
+      "ckpt_dir": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/Edit-by-Track/token_residual_lora_beta1_t2_first/outputs/motionv2v_token_concat_lora_wanmove_openvid_movebench_beta025_t2_first",
+      "qual_exp_key": "token_lora",
+      "color": "#d2a8ff",
+      "points": [
+        {
+          "iter": 2500,
+          "label": "2.5k",
+          "ckpt_path": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/Edit-by-Track/token_residual_lora_beta1_t2_first/outputs/motionv2v_token_concat_lora_wanmove_openvid_movebench_beta025_t2_first/0002500.pth",
+          "qual_dir_fwd": "eval_baseline_ckpt_sweep/token_lora/iter_02500/qual/token_lora",
+          "qual_dir_swap": "eval_baseline_ckpt_sweep/token_lora/iter_02500/qual/token_lora_swap",
+          "metrics_dir": "eval_baseline_ckpt_sweep/token_lora/iter_02500/metrics",
+          "metrics": {
+            "fvd": 53.62387853406032,
+            "l2_mean": 0.16094238936901092,
+            "l2_std": 0.053377837262580274,
+            "dino_mean": 0.8237331902980805,
+            "dino_std": 0.09271298189117286,
+            "epe_mean": 34.84131098183787,
+            "epe_std": 28.407162164096533
+          },
+          "n_videos": 150
+        },
+        {
+          "iter": 5000,
+          "label": "5k",
+          "ckpt_path": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/Edit-by-Track/token_residual_lora_beta1_t2_first/outputs/motionv2v_token_concat_lora_wanmove_openvid_movebench_beta025_t2_first/0005000.pth",
+          "qual_dir_fwd": "eval_baseline_ckpt_sweep/token_lora/iter_05000/qual/token_lora",
+          "qual_dir_swap": "eval_baseline_ckpt_sweep/token_lora/iter_05000/qual/token_lora_swap",
+          "metrics_dir": "eval_baseline_ckpt_sweep/token_lora/iter_05000/metrics",
+          "metrics": {
+            "fvd": 44.33377083944633,
+            "l2_mean": 0.14244588457047938,
+            "l2_std": 0.050534359205136645,
+            "dino_mean": 0.8322704207897186,
+            "dino_std": 0.0936114976812922,
+            "epe_mean": 26.152566343178727,
+            "epe_std": 25.223309515077645
+          },
+          "n_videos": 150
+        },
+        {
+          "iter": 7500,
+          "label": "7.5k",
+          "ckpt_path": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/Edit-by-Track/token_residual_lora_beta1_t2_first/outputs/motionv2v_token_concat_lora_wanmove_openvid_movebench_beta025_t2_first/0007500.pth",
+          "qual_dir_fwd": "eval_baseline_ckpt_sweep/token_lora/iter_07500/qual/token_lora",
+          "qual_dir_swap": "eval_baseline_ckpt_sweep/token_lora/iter_07500/qual/token_lora_swap",
+          "metrics_dir": "eval_baseline_ckpt_sweep/token_lora/iter_07500/metrics",
+          "metrics": {
+            "fvd": 44.164486505271086,
+            "l2_mean": 0.13761547443767388,
+            "l2_std": 0.048322581687095315,
+            "dino_mean": 0.8303470579783122,
+            "dino_std": 0.09619357859850078,
+            "epe_mean": 24.19068885945415,
+            "epe_std": 24.45759457107844
+          },
+          "n_videos": 150
+        },
+        {
+          "iter": 10000,
+          "label": "10k",
+          "ckpt_path": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/Edit-by-Track/token_residual_lora_beta1_t2_first/outputs/motionv2v_token_concat_lora_wanmove_openvid_movebench_beta025_t2_first/0010000.pth",
+          "qual_dir_fwd": "eval_baseline_ckpt_sweep/token_lora/iter_10000/qual/token_lora",
+          "qual_dir_swap": "eval_baseline_ckpt_sweep/token_lora/iter_10000/qual/token_lora_swap",
+          "metrics_dir": "eval_baseline_ckpt_sweep/token_lora/iter_10000/metrics",
+          "metrics": {
+            "fvd": 41.61109141895368,
+            "l2_mean": 0.13624367301662763,
+            "l2_std": 0.04746010183928246,
+            "dino_mean": 0.8298035496473313,
+            "dino_std": 0.09543976371807299,
+            "epe_mean": 23.122154803293917,
+            "epe_std": 21.75731451608739
+          },
+          "n_videos": 150
+        },
+        {
+          "iter": 12500,
+          "label": "12.5k",
+          "ckpt_path": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/Edit-by-Track/token_residual_lora_beta1_t2_first/outputs/motionv2v_token_concat_lora_wanmove_openvid_movebench_beta025_t2_first/0012500.pth",
+          "qual_dir_fwd": "eval_baseline_ckpt_sweep/token_lora/iter_12500/qual/token_lora",
+          "qual_dir_swap": "eval_baseline_ckpt_sweep/token_lora/iter_12500/qual/token_lora_swap",
+          "metrics_dir": "eval_baseline_ckpt_sweep/token_lora/iter_12500/metrics",
+          "metrics": {
+            "fvd": 40.22976387894036,
+            "l2_mean": 0.13686367273330688,
+            "l2_std": 0.04715983305677261,
+            "dino_mean": 0.8352189826965332,
+            "dino_std": 0.09180350368359329,
+            "epe_mean": 24.283751498033027,
+            "epe_std": 23.38304329693405
+          },
+          "n_videos": 150
+        },
+        {
+          "iter": 15000,
+          "label": "15k",
+          "ckpt_path": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/Edit-by-Track/token_residual_lora_beta1_t2_first/outputs/motionv2v_token_concat_lora_wanmove_openvid_movebench_beta025_t2_first/0015000.pth",
+          "qual_dir_fwd": "eval_baseline_ckpt_sweep/token_lora/iter_15000/qual/token_lora",
+          "qual_dir_swap": "eval_baseline_ckpt_sweep/token_lora/iter_15000/qual/token_lora_swap",
+          "metrics_dir": "eval_baseline_ckpt_sweep/token_lora/iter_15000/metrics",
+          "metrics": {
+            "fvd": 41.06287634992635,
+            "l2_mean": 0.13674242926140626,
+            "l2_std": 0.04903807154060821,
+            "dino_mean": 0.8325029540061951,
+            "dino_std": 0.0969042506104805,
+            "epe_mean": 25.121506722377706,
+            "epe_std": 25.455973838145045
+          },
+          "n_videos": 150
+        }
+      ]
+    },
+    "ctrlnet_lrscale": {
+      "label": "ControlNet-18b (LRscale multi-ds)",
+      "ckpt_dir": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/MotionV2V/ctrl_net18blocks_LRscale_multi_ds/outputs/motionv2v_controlnet_1_3b_openvid_movebench",
+      "qual_exp_key": "ctrlnet_lrscale",
+      "color": "#79c0ff",
+      "points": [
+        {
+          "iter": 2500,
+          "label": "2.5k",
+          "ckpt_path": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/MotionV2V/ctrl_net18blocks_LRscale_multi_ds/outputs/motionv2v_controlnet_1_3b_openvid_movebench/0002500.pth",
+          "qual_dir_fwd": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_02500/qual/ctrlnet_lrscale",
+          "qual_dir_swap": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_02500/qual/ctrlnet_lrscale_swap",
+          "metrics_dir": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_02500/metrics",
+          "metrics": {
+            "fvd": 50.10169395647374,
+            "l2_mean": 0.16285954867800076,
+            "l2_std": 0.04273700930713594,
+            "dino_mean": 0.7896883702278137,
+            "dino_std": 0.09841612593153222,
+            "epe_mean": 15.461073417422094,
+            "epe_std": 13.475569578681133
+          },
+          "n_videos": 150
+        },
+        {
+          "iter": 5000,
+          "label": "5k",
+          "ckpt_path": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/MotionV2V/ctrl_net18blocks_LRscale_multi_ds/outputs/motionv2v_controlnet_1_3b_openvid_movebench/0005000.pth",
+          "qual_dir_fwd": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_05000/qual/ctrlnet_lrscale",
+          "qual_dir_swap": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_05000/qual/ctrlnet_lrscale_swap",
+          "metrics_dir": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_05000/metrics",
+          "metrics": {
+            "fvd": 40.49633510843812,
+            "l2_mean": 0.1529460772871971,
+            "l2_std": 0.043919903742403794,
+            "dino_mean": 0.806567148566246,
+            "dino_std": 0.1001681855401946,
+            "epe_mean": 10.311037959746388,
+            "epe_std": 8.1703460440213
+          },
+          "n_videos": 150
+        },
+        {
+          "iter": 7500,
+          "label": "7.5k",
+          "ckpt_path": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/MotionV2V/ctrl_net18blocks_LRscale_multi_ds/outputs/motionv2v_controlnet_1_3b_openvid_movebench/0007500.pth",
+          "qual_dir_fwd": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_07500/qual/ctrlnet_lrscale",
+          "qual_dir_swap": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_07500/qual/ctrlnet_lrscale_swap",
+          "metrics_dir": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_07500/metrics",
+          "metrics": {
+            "fvd": 36.28277958197892,
+            "l2_mean": 0.13234769543011984,
+            "l2_std": 0.04314912816999496,
+            "dino_mean": 0.8082570801178615,
+            "dino_std": 0.10029066842209436,
+            "epe_mean": 9.758489158181488,
+            "epe_std": 7.875553923259405
+          },
+          "n_videos": 150
+        },
+        {
+          "iter": 10000,
+          "label": "10k",
+          "ckpt_path": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/MotionV2V/ctrl_net18blocks_LRscale_multi_ds/outputs/motionv2v_controlnet_1_3b_openvid_movebench/0010000.pth",
+          "qual_dir_fwd": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_10000/qual/ctrlnet_lrscale",
+          "qual_dir_swap": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_10000/qual/ctrlnet_lrscale_swap",
+          "metrics_dir": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_10000/metrics",
+          "metrics": {
+            "fvd": 35.53463524249048,
+            "l2_mean": 0.1258824410289526,
+            "l2_std": 0.04257155810330376,
+            "dino_mean": 0.8130581053098043,
+            "dino_std": 0.09945160156458566,
+            "epe_mean": 9.383331757639118,
+            "epe_std": 6.84191206309413
+          },
+          "n_videos": 150
+        },
+        {
+          "iter": 12500,
+          "label": "12.5k",
+          "ckpt_path": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/MotionV2V/ctrl_net18blocks_LRscale_multi_ds/outputs/motionv2v_controlnet_1_3b_openvid_movebench/0012500.pth",
+          "qual_dir_fwd": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_12500/qual/ctrlnet_lrscale",
+          "qual_dir_swap": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_12500/qual/ctrlnet_lrscale_swap",
+          "metrics_dir": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_12500/metrics",
+          "metrics": {
+            "fvd": 36.72465827289045,
+            "l2_mean": 0.12506107985973358,
+            "l2_std": 0.04331038991560132,
+            "dino_mean": 0.8114009831349055,
+            "dino_std": 0.10475882107598534,
+            "epe_mean": 9.482038965598049,
+            "epe_std": 6.318148645879025
+          },
+          "n_videos": 150
+        },
+        {
+          "iter": 15000,
+          "label": "15k",
+          "ckpt_path": "/data/project-vilab/minjung/Fastgen_mj/FASTGEN_OUTPUT/VME_64trackSampling_maskedSampling_multi_ds/MotionV2V/ctrl_net18blocks_LRscale_multi_ds/outputs/motionv2v_controlnet_1_3b_openvid_movebench/0015000.pth",
+          "qual_dir_fwd": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_15000/qual/ctrlnet_lrscale",
+          "qual_dir_swap": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_15000/qual/ctrlnet_lrscale_swap",
+          "metrics_dir": "eval_baseline_ckpt_sweep/ctrlnet_lrscale/iter_15000/metrics",
+          "metrics": {
+            "fvd": 36.7960606565564,
+            "l2_mean": 0.12581182730694612,
+            "l2_std": 0.042939710505082815,
+            "dino_mean": 0.8137378168106079,
+            "dino_std": 0.10093008793128985,
+            "epe_mean": 9.185060110146276,
+            "epe_std": 5.979728636832486
+          },
+          "n_videos": 150
+        }
+      ]
+    }
+  }
+}

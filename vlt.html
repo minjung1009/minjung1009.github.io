@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VLT — Vision-Language-Tracker Design Proposal</title>
+<script>
+window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},svg:{fontCache:'global'}};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+<style>
+:root{--bg:#0d1117;--surf:#161b22;--surf2:#21262d;--surf3:#2d333b;--border:#30363d;--text:#c9d1d9;--muted:#8b949e;--accent:#58a6ff;--accent2:#7ee787;--warn:#f0883e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace,ui-monospace;font-size:14px;line-height:1.65;min-height:100vh}
+.top-header{background:linear-gradient(160deg,#0d1117,#161b22);border-bottom:1px solid var(--border);padding:26px 32px 20px}
+.top-header h1{font-size:24px;color:var(--accent);font-weight:700;margin-bottom:6px}
+.top-header .sub{color:var(--muted);font-size:12px}
+.section-nav{display:flex;gap:6px;flex-wrap:wrap;padding:12px 32px;background:var(--surf);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.snav-btn{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);padding:6px 14px;cursor:pointer;font-size:12px;font-family:inherit;text-decoration:none;transition:all .15s}
+.snav-btn:hover{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:700}
+.wrap{max-width:980px;margin:0 auto;padding:8px 32px 80px}
+section{padding:30px 0 10px;border-bottom:1px solid var(--border)}
+section:last-child{border-bottom:none}
+h2{font-size:19px;font-weight:700;color:var(--accent);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--surf3)}
+h3{font-size:15px;font-weight:700;color:var(--accent2);margin:22px 0 10px}
+h4{font-size:14px;font-weight:700;color:var(--text);margin:16px 0 8px}
+p{margin:10px 0;max-width:880px}
+ul,ol{margin:10px 0 10px 26px;max-width:880px}
+li{margin:6px 0}
+strong{color:#fff;font-weight:700}
+code{background:var(--surf2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:12.5px;color:var(--accent2)}
+pre{background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:16px 18px;overflow-x:auto;margin:14px 0;line-height:1.45}
+pre code{background:none;border:none;padding:0;color:var(--text);font-size:12.5px}
+table{border-collapse:collapse;width:100%;max-width:880px;margin:14px 0;font-size:13px}
+th,td{padding:9px 14px;border:1px solid var(--border);text-align:left;vertical-align:top}
+thead th{background:var(--surf2);color:var(--accent);font-weight:700}
+tbody tr:nth-child(odd){background:var(--surf)}
+tbody tr:nth-child(even){background:var(--surf2)}
+tbody tr:hover{background:var(--surf3)}
+.lead{font-size:15px;color:var(--text);background:var(--surf);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;margin:14px 0}
+.callout{background:var(--surf);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:0 8px 8px 0;padding:12px 18px;margin:14px 0}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.toc a{color:var(--muted);font-size:12px;text-decoration:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px}
+.toc a:hover{color:var(--accent);border-color:var(--accent)}
+.mjx-container{overflow-x:auto;overflow-y:hidden}
+.cap{color:var(--muted);font-size:11px;margin-top:-6px}
+</style>
+</head>
+<body>
+<div class="top-header">
+  <h1>VLT — Vision-Language-Tracker</h1>
+  <div class="sub">Design Proposal · Track-conditioned Video-to-Video Generation · injecting high-level reasoning into the generator</div>
+</div>
+<div class="section-nav">
+  <a class="snav-btn" href="#motivation">1 · Motivation</a>
+  <a class="snav-btn" href="#tasks">2 · Tasks</a>
+  <a class="snav-btn" href="#data">3 · Data</a>
+  <a class="snav-btn" href="#arch">4 · Architecture</a>
+  <a class="snav-btn" href="#training">5 · Training</a>
+  <a class="snav-btn" href="#experiments">6 · Experiments</a>
+  <a class="snav-btn" href="#summary">7 · Summary</a>
+</div>
+
+<div class="wrap">
+
+<section id="motivation">
+  <h2>1 · Motivation &amp; Goal</h2>
+
+  <h3>1.1 The Full Pipeline</h3>
+  <p class="lead">The goal is to <strong>inject high-level reasoning into a track-conditioned video-to-video generator.</strong></p>
+  <p>The base generator takes the following inputs:</p>
+<pre><code>Input: V_s (source video), T_s (source track), T_t (target track), C_t (target caption)
+          ↓
+     [ Track-conditioned Video Generator ]
+          ↓
+Output: V_t (generated target video)</code></pre>
+  <ul>
+    <li><strong>V_s</strong> — carries appearance and scene structure, but the generator sees it only as a pixel-level signal.</li>
+    <li><strong>T_s, T_t</strong> — given as track coordinate sequences, but their <em>meaning</em> (which object, what kind of motion) is not understood.</li>
+    <li><strong>C_t</strong> — a semantic description of the target video, but its relationship to T_t is never explicitly modeled.</li>
+  </ul>
+  <p>VLT learns the <strong>relationships among scene, motion, and caption</strong> expressed by these four signals, and injects the resulting representation \(R\) into the generator's attention layers so that the generator produces more coherent and semantically meaningful video.</p>
+
+  <h3>1.2 Limitations of the Generator</h3>
+  <ol>
+    <li><strong>No semantic understanding of V_s</strong> — it sees V_s as raw pixels and does not know which objects exist or how the scene is structured.</li>
+    <li><strong>No understanding of T_s→T_t motion semantics</strong> — it can follow coordinate changes but does not conceptually grasp whether the motion is camera vs. object motion, zoom, rotation, etc.</li>
+    <li><strong>No cross-modal alignment between C_t and T_t</strong> — C_t says "what / how to show," T_t says "where / how to move," but the generator never understands that these are <strong>two expressions of the same physical event.</strong></li>
+  </ol>
+
+  <h3>1.3 Three Capabilities VLT Must Provide</h3>
+  <ol>
+    <li><strong>Object &amp; Scene Grounding</strong> — understand which objects exist in V_s and which object/region a given track belongs to.<br><span class="cap">e.g. "this track is the person's head," "this track is a background tree."</span></li>
+    <li><strong>Motion Semantics Understanding</strong> — understand what kind of motion the T_s→T_t change represents (camera / object / zoom / rotation), and in what direction and speed.<br><span class="cap">e.g. "camera pans right," "object moves forward quickly," "the whole scene zooms in."</span></li>
+    <li><strong>Caption-Track Alignment</strong> — judge which phrase of C_t (e.g. "runs to the right") corresponds to which motion pattern in T_t, and whether the two are consistent.<br><span class="cap">e.g. "C_t says the person moves right, but T_t moves left → mismatch."</span></li>
+  </ol>
+  <p>The representation \(R\) produced by VLT compresses the information from these three capabilities; the generator consumes it (via cross-attention) to produce video where scene, motion, and caption are mutually consistent.</p>
+</section>
+
+<section id="tasks">
+  <h2>2 · Training Task Definition</h2>
+  <p class="lead">VLT is a <strong>multi-task model that shares a single backbone and common modules while performing several tasks simultaneously.</strong> This section defines what learning signal each capability receives from each task.</p>
+
+  <h3>2.1 Task Special Token Design</h3>
+  <p>Each task is distinguished by a <strong>special token</strong> prepended to the input text. These are learnable tokens newly added to Qwen3-VL's embedding table, serving two roles:</p>
+  <ol>
+    <li><strong>Task routing</strong> — telling the model which task to perform.</li>
+    <li><strong>Head selection</strong> — deciding whether to use the Track Regression Head (Task A') or the Language Head (Task B/C).</li>
+  </ol>
+  <table>
+    <thead><tr><th>Special Token</th><th>Task</th><th>Output Head</th></tr></thead>
+    <tbody>
+      <tr><td><code>&lt;PREDICT_TRACK&gt;</code></td><td>Task A' — track coordinate prediction</td><td>Track Regression Head</td></tr>
+      <tr><td><code>&lt;DESCRIBE_MOTION&gt;</code></td><td>Task B — motion description generation</td><td>Language Head</td></tr>
+      <tr><td><code>&lt;MOTION_QA&gt;</code></td><td>Task C — motion-related QA</td><td>Language Head</td></tr>
+      <tr><td><code>&lt;MATCH_CAP_TRACK&gt;</code></td><td>Task C-align — caption–track matching</td><td>Language Head (or binary head)</td></tr>
+    </tbody>
+  </table>
+  <p>Usage examples:</p>
+<pre><code>&lt;PREDICT_TRACK&gt; Source caption: ... Target caption: ...
+&lt;DESCRIBE_MOTION&gt; Describe how the motion changes between the source and target tracks.
+&lt;MOTION_QA&gt; Question: Is this motion caused by the camera or the object? Answer concisely.
+&lt;MATCH_CAP_TRACK&gt; Does the target caption match the motion of the target track? Answer Yes or No.</code></pre>
+
+  <h3>2.2 Task A' — PREDICT_TRACK (Motion Reasoning)</h3>
+  <p><strong>Goal:</strong> Accurately predict the source→target motion at the coordinate level, jointly learning motion semantics and grounding.</p>
+  <ul>
+    <li><strong>Input:</strong> <code>&lt;PREDICT_TRACK&gt;</code> + <code>(V_s, T_s, C_t)</code> or <code>(V_s, T_s, motion_instruction)</code></li>
+    <li><strong>Output:</strong> <code>T_t</code> (N×T×2)</li>
+    <li><strong>Loss:</strong> Huber/L1 loss on coordinates</li>
+  </ul>
+  <p>To solve this task VLT must (a) recognize in V_s the object/region the track follows (Object &amp; Scene Grounding), and (b) understand how the motion described by C_t or the instruction applies to which part of T_s (Motion Semantics + part of Caption-Track Alignment).</p>
+
+  <h3>2.3 Task B — DESCRIBE_MOTION (Motion → Language)</h3>
+  <p><strong>Goal:</strong> Describe track changes and scene context in language, aligning motion semantics into the language space.</p>
+  <ul>
+    <li><strong>Input:</strong> <code>&lt;DESCRIBE_MOTION&gt;</code> + <code>(V_s, T_s, T_t)</code></li>
+    <li><strong>Output:</strong> motion description text</li>
+    <li><strong>Loss:</strong> Cross-entropy on generated tokens</li>
+  </ul>
+  <p>Example outputs:</p>
+  <ul>
+    <li>"The person moves quickly to the right while the background stays static."</li>
+    <li>"The camera zooms in while the object remains centered."</li>
+  </ul>
+
+  <h3>2.4 Task C — MOTION_QA (three sub-types)</h3>
+  <p><strong>Goal:</strong> Condition on all of V_s, T_s, T_t, C_t to answer compound motion-related questions, reinforcing the three capabilities at a fine-grained level.</p>
+  <ul>
+    <li><strong>Input:</strong> <code>&lt;MOTION_QA&gt;</code> + <code>(V_s, T_s, T_t, C_t, Q)</code></li>
+    <li><strong>Output:</strong> A (text or multiple choice)</li>
+    <li><strong>Loss:</strong> Cross-entropy</li>
+  </ul>
+  <p>Question templates fall into three categories:</p>
+  <ol>
+    <li><strong>C-obj (Object Grounding)</strong> → reinforces Object &amp; Scene Grounding
+      <ul><li>"What object does the moving track belong to?"</li><li>"Is the moving object the person or the ball?"</li></ul></li>
+    <li><strong>C-motion (Motion Semantics)</strong> → reinforces Motion Semantics Understanding
+      <ul><li>"Is this motion caused mainly by the camera or the object?"</li><li>"Does the object speed up or slow down?"</li><li>"In which direction does the object move at the end?"</li></ul></li>
+    <li><strong>C-align (Caption-Track Alignment)</strong> → directly trains Caption-Track Alignment
+      <ul><li>"Does the target caption correctly describe the motion of the track?" (Yes/No)</li><li>"Which phrase in the caption corresponds to the target track motion?"</li></ul></li>
+  </ol>
+
+  <h3>2.5 Capability ↔ Task Mapping</h3>
+  <table>
+    <thead><tr><th>Capability</th><th>Primary Training Tasks</th></tr></thead>
+    <tbody>
+      <tr><td>Object &amp; Scene Grounding</td><td>Task A', Task C-obj</td></tr>
+      <tr><td>Motion Semantics Understanding</td><td>Task A', Task B, Task C-motion</td></tr>
+      <tr><td>Caption-Track Alignment</td><td>Task A' (C_t condition), Task C-align, C-align-style QA</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="data">
+  <h2>3 · Data Design</h2>
+
+  <h3>3.1 Sample Structure</h3>
+  <p>Each training sample is a 6-tuple:</p>
+<pre><code>(V_s, T_s, C_s, V_t, T_t, C_t)
+
+V_s: source video  (T, H, W, 3)
+T_s: source track  (N=64, T, 2)   — pixel coordinates (x, y)
+C_s: source caption (text)
+V_t: target video  (T, H, W, 3)
+T_t: target track  (N=64, T, 2)   — points corresponding to T_s
+C_t: target caption (text)</code></pre>
+  <p>Source and target are a <strong>pair with identical appearance/background but different motion.</strong> The N=64 track points are random pixels sampled from the video and tracked with a tracker such as CoTracker.</p>
+
+  <h3>3.2 Automatic Instruction Generation</h3>
+  <p>The already-available <code>C_s</code> and <code>C_t</code> are fed to an LLM to automatically generate a <strong>motion instruction</strong>:</p>
+<pre><code>C_s: "A person walking slowly to the left in a park"
+C_t: "A person running quickly to the right in a park"
+       ↓  LLM
+Instruction: "Make the person move faster and change direction to the right"</code></pre>
+  <p>As a fallback — when <code>C_s</code> and <code>C_t</code> are nearly identical or motion information is insufficient — analyze <code>ΔT = T_t − T_s</code> to generate a templated sentence.</p>
+
+  <h3>3.3 Track Volume Conversion</h3>
+  <p>Convert the sparse track <code>(N, T, 2)</code> into a <strong>Rasterized Track Volume</strong> <code>(T, H, W, C)</code>:</p>
+  <p>\[ \mathbf{c}[t,\, x_t^n,\, y_t^n] = v[n,t] \cdot \phi^n \]</p>
+  <ul>
+    <li>\(\phi^n \in \mathbb{R}^C\): random sinusoidal embedding of the n-th point (C=64)</li>
+    <li>\(v[n,t]\): visibility mask (0 or 1)</li>
+    <li>all other positions: zero</li>
+  </ul>
+  <p>It is then patchified and passed through the Track Projection Layer to become tokens on the same spatiotemporal grid as the video.</p>
+
+  <h3>3.4 Recommended Data Scale</h3>
+  <table>
+    <thead><tr><th>Stage</th><th>Purpose</th><th>Recommended Scale</th><th>Rationale</th></tr></thead>
+    <tbody>
+      <tr><td>Stage 1 (Warm-up)</td><td>Initialize track modules</td><td><strong>5k–20k</strong> video pairs</td><td>Enough for small heads to converge (VLM4VLA, OFT regime)</td></tr>
+      <tr><td>Stage 2 (in-domain)</td><td>Track prediction + description</td><td><strong>50k–150k</strong> video pairs</td><td>Output dim (64×T×2) is large, so slightly larger than OFT</td></tr>
+      <tr><td>Stage 3 (Cycle)</td><td>Self-supervised reinforcement</td><td>No extra data needed</td><td>Reuses Stage 2 data</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="arch">
+  <h2>4 · VLT Architecture</h2>
+
+  <h3>4.1 Qwen3-VL Backbone Recap</h3>
+  <p>VLT uses Qwen3-VL directly as the backbone. The original structure:</p>
+<pre><code>[ Original Qwen3-VL ]
+
+Input: text tokens + video frame tokens
+         ↓
+  Visual Encoder (ViT-based)
+  (T, H, W, 3) → (T/2, H/28, W/28, d) tokens
+         ↓
+  3D-RoPE: rotary PE over (t, h, w) axes per token
+         ↓
+  Qwen3 LLM Transformer
+         ↓
+  Language Head (LM head)
+         ↓
+  Output: text tokens (VQA, captioning, ...)</code></pre>
+  <p>i.e. the original Qwen3-VL takes <strong>only text + video tokens</strong> and performs video understanding / description / QA.</p>
+
+  <h3>4.2 VLT = Qwen3-VL + Minimal Modules</h3>
+  <p>VLT adds <strong>only the minimal modules needed to process tracks</strong> on top of Qwen3-VL.</p>
+<pre><code>[ VLT Architecture ]
+
+Input:
+  [&lt;TASK_TOKEN&gt; + text tokens]            ← Task special token added
+  [source video V_s (T,H,W,3)]
+       ↓ Qwen3-VL ViT (existing)
+  video tokens  (T/2, H/28, W/28, d)
+                                          ← identical to Qwen3-VL up to here
+  [track volume (T,H,W,C)]
+       ↓ Track Projection Layer           ← NEW ①
+  track tokens  (T/2, H/28, W/28, d)
+
+  ─────────────────────────────────────
+  token sequence:
+    tokens = concat(
+        video_tokens + E_video,           ← E_video: existing or new modality embedding
+        track_tokens + E_track,           ← E_track: NEW ②
+        dim=sequence
+    )
+  ─────────────────────────────────────
+
+  Qwen3 LLM Transformer (existing, LoRA fine-tuning)
+         ↓
+  hidden states h ∈ ℝ^(seq_len, d)
+         ↓
+  ┌──────────────────┴──────────────────┐
+[Language Head]               [Track Regression Head]
+(reuse existing LM head)       (NEW ③, MLP)
+       ↓                               ↓
+  text output                  target track (N, T, 2)
+  (Task B, C, C-align)         (Task A')</code></pre>
+
+  <h4>Added modules</h4>
+  <table>
+    <thead><tr><th>Module</th><th>Location</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td>① Track Projection Layer</td><td>input side</td><td>track volume → track tokens, <code>Linear(14×14×2C, d)</code></td></tr>
+      <tr><td>② <code>E_track</code> (modality embedding)</td><td>input side</td><td>learnable vector distinguishing video vs. track tokens</td></tr>
+      <tr><td>③ Track Regression Head</td><td>output side</td><td>hidden state → target track coords, <code>MLP(d → N×T×2)</code></td></tr>
+      <tr><td>Task special tokens</td><td>input side</td><td>task routing signal (<code>&lt;PREDICT_TRACK&gt;</code> etc.)</td></tr>
+    </tbody>
+  </table>
+  <p class="callout">Total added parameters are at the <strong>&lt;1% level</strong> of the backbone.</p>
+
+  <h3>4.3 Modality Embedding: E_video &amp; E_track</h3>
+  <p><strong>E_video</strong> and <strong>E_track</strong> are <strong>learnable vectors</strong> \(\in \mathbb{R}^d\) added to video tokens and track tokens respectively.</p>
+  <p>Why this is needed: Qwen3-VL encodes position via 3D-RoPE, so a video token and a track token at the same <code>(t, h, w)</code> share the same RoPE. Their <em>position</em> is distinguishable, but their <em>modality</em> is not encoded by RoPE alone. E_video and E_track encode this <strong>modality identity</strong>.</p>
+<pre><code># Positional Encoding: same (t,h,w) → same RoPE
+video_tokens = rope_encode(video_patch_tokens, t, h, w)  # existing
+track_tokens = rope_encode(track_patch_tokens, t, h, w)  # same PE applied
+
+# Modality Embedding: distinguish modality
+video_tokens = video_tokens + E_video   # E_video ∈ ℝ^d, learnable
+track_tokens = track_tokens + E_track   # E_track ∈ ℝ^d, learnable (NEW)
+
+# Sequence: concat, not summed
+tokens = concat([video_tokens, track_tokens], dim=sequence)</code></pre>
+  <p>This makes it clear, in transformer self-attention, <strong>which modality information is being attended to</strong> when a video token attends to a track token or vice versa.</p>
+
+  <h3>4.4 Video &amp; Track Tokenization</h3>
+  <p>Qwen3-VL tokenizes <code>(T,H,W,3)</code> as:</p>
+  <p>\[ (T, H, W, 3) \xrightarrow{\text{patchify (2,14,14)}} \left(\tfrac{T}{2}, \tfrac{H}{14}, \tfrac{W}{14}, 1176\right) \xrightarrow{\text{Linear}} \left(\tfrac{T}{2}, \tfrac{H}{14}, \tfrac{W}{14}, d\right) \xrightarrow{\text{spatial merge 2×2}} \left(\tfrac{T}{2}, \tfrac{H}{28}, \tfrac{W}{28}, d\right) \]</p>
+  <p>The <strong>same grid</strong> is applied to the track volume, matched in dimension by the Track Projection Layer <code>Linear(14×14×2C → d)</code>, then merged identically:</p>
+  <p>\[ (T, H, W, C) \xrightarrow{\text{patchify (2,14,14)}} \left(\tfrac{T}{2}, \tfrac{H}{14}, \tfrac{W}{14}, 14{\times}14{\times}2C\right) \xrightarrow{\mathbf{W}_\text{track}} \left(\tfrac{T}{2}, \tfrac{H}{14}, \tfrac{W}{14}, d\right) \xrightarrow{\text{merge}} \left(\tfrac{T}{2}, \tfrac{H}{28}, \tfrac{W}{28}, d\right) \]</p>
+  <p>This way <code>video_token[t, h, w]</code> and <code>track_token[t, h, w]</code> share the <strong>same receptive field</strong>, guaranteeing pixel-level alignment.</p>
+</section>
+
+<section id="training">
+  <h2>5 · Training</h2>
+
+  <h3>5.1 Stage 1 — Track Module Warm-up</h3>
+  <ul>
+    <li>Backbone fully frozen</li>
+    <li>Train only Track Projection Layer, Track Regression Head, <code>E_track</code>, and task special tokens</li>
+    <li>Loss: Task A' Huber loss only</li>
+  </ul>
+<pre><code>loss_A = huber_loss(track_reg_head(h_last), T_t_gt)</code></pre>
+
+  <h3>5.2 Stage 2 — Multi-task Instruction Tuning</h3>
+  <ul>
+    <li>Backbone: LoRA or unfreeze top N layers</li>
+    <li>Loss: mixture of Task A'/B/C and C-align</li>
+  </ul>
+  <p>\[ \mathcal{L} = \lambda_A \mathcal{L}_{\text{track}} + \lambda_B \mathcal{L}_{\text{desc}} + \lambda_C \mathcal{L}_{\text{VQA}} + \lambda_M \mathcal{L}_{\text{match}} \]</p>
+  <p>Recommended ratio: \(\lambda_A : \lambda_B : \lambda_C : \lambda_M = 2 : 1 : 1 : 1\)</p>
+
+  <h3>5.3 Stage 3 — Cycle Consistency (Optional)</h3>
+  <p>Exploit the inverse relationship between Task A' and B to add a self-supervised signal:</p>
+  <p>\[ \mathcal{L}_{\text{cycle}} = \mathcal{L}_{\text{desc}}\big(f_B(\hat{T}_t), \text{instr}\big) \]</p>
+</section>
+
+<section id="experiments">
+  <h2>6 · Experimental Plan</h2>
+
+  <h3>6.1 Evaluation Metrics</h3>
+  <ul>
+    <li><strong>Task A':</strong> per-point L2/Huber error, AEE, Occlusion Accuracy</li>
+    <li><strong>Task B:</strong> BLEU-4, CIDEr, BERT-score (semantic similarity)</li>
+    <li><strong>Task C:</strong> Top-1 QA accuracy</li>
+  </ul>
+
+  <h3>6.2 Capability Verification Experiments</h3>
+  <ul>
+    <li><strong>Instruction Sensitivity Test</strong> — does T_t change when different instructions are given for the same <code>(V_s, T_s)</code>?</li>
+    <li><strong>Caption-Track Consistency Test</strong> — internal activation difference when C_t ↔ T_t match vs. mismatch.</li>
+    <li><strong>Track Ablation</strong> — measure performance drop when the track is removed (does the track actually contribute?).</li>
+    <li><strong>Cycle Consistency</strong> — semantic similarity of instruction regeneration along Task A' → Task B.</li>
+    <li><strong>Downstream Quality</strong> — SSIM/LPIPS/FVD of a generator with injected VLT representation R vs. the base generator without it.</li>
+  </ul>
+
+  <h3>6.3 Baseline Comparisons</h3>
+  <table>
+    <thead><tr><th>Baseline</th><th>Comparison aspect</th></tr></thead>
+    <tbody>
+      <tr><td>Qwen3-VL (vanilla)</td><td>Effect of adding the track modality</td></tr>
+      <tr><td>VLT — Task A' only</td><td>Contribution of multi-task training</td></tr>
+      <tr><td>Base generator (no VLT)</td><td>Effect of injecting VLT representation downstream</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="summary">
+  <h2>7 · Summary</h2>
+  <p class="lead">VLT is built by adding just three lightweight modules on top of Qwen3-VL — <strong>Track Projection Layer (①), Track Modality Embedding E_track (②), and Track Regression Head (③).</strong></p>
+  <p>Tracks are processed as separate tokens on the same spatiotemporal grid as the video; sharing 3D-RoPE plus modality embeddings achieves both pixel-level video–track alignment and modality distinction simultaneously.</p>
+  <p>Through multi-task training over Task A'/B/C and C-align, VLT learns the three capabilities — <strong>Object &amp; Scene Grounding, Motion Semantics Understanding, and Caption-Track Alignment</strong> — and the final representation \(R\) encodes, at a high level, the relationships among the four conditions <code>(V_s, T_s, T_t, C_t)</code>.</p>
+  <p>The core value of VLT is that this \(R\), injected into the attention layers of the track-conditioned video generator, helps the generator treat C_t and T_t not as independent conditions but as a single, coherent semantic.</p>
+</section>
+
+</div>
+</body>
+</html>
