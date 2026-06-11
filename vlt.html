@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>VLT — Vision-Language-Tracker Design Proposal</title>
+<title>VLT — Vision-Language-Track Model Design Proposal</title>
 <script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},svg:{fontCache:'global'}};</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 <style>
@@ -91,7 +91,7 @@ em{color:var(--muted);font-style:normal}
 </head>
 <body>
 <div class="top-header">
-  <h1>VLT — Vision-Language-Tracker</h1>
+  <h1>VLT — Vision-Language-Track model</h1>
   <div class="sub">Design Proposal · Injecting high-level reasoning into a track-conditioned V2V generator</div>
   <div class="page-nav"><a href="index.html">← Main Report</a></div>
 </div>
@@ -231,7 +231,7 @@ em{color:var(--muted);font-style:normal}
  source ──────   target ───────
 
 V_s / V_t : video  (T, H, W, 3)   — same appearance, different motion
-T_s / T_t : track  (N=64, T, 2)   — CoTracker-style pixel coordinates
+T_s / T_t : track  (N=64, T, 2)   — N: number of point, 2 : pixel coordinates
 C_s / C_t : caption (text)</code></pre>
 
 <h3>Automatic instruction generation</h3>
